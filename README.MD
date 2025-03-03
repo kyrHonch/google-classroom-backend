@@ -31,3 +31,12 @@ Google Classroom API sucks.
   ]
 }
 ```
+
+# How to make your endpoint work???
+1. The requirement for the endpoint is to have a https connect (aka SSL or TSL).
+2. To do that, you need to install mkcert (if you are on MacOS, you can use brew to install it).
+3. Run the following commands:
+```bash
+brew install mkcert && mkcert -install && mkcert -key-file local.key -cert-file local.crt localhost 127.0.0.1 ::1
+```
+4. This will create 2 files: `local.key` and `local.crt`, which are key and certificate files respectively.

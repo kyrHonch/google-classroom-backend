@@ -7,9 +7,21 @@ from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from googleapiclient.errors import HttpError
+from flask_cors import CORS
 
 app = Flask(__name__)
 app.secret_key = "super secret key"
+CORS(app)
+
+ASSETS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+@app.route('/')
+def hello_world():
+    response = {"message": "Hello, World!"}
+    if session.get("credentials"):
+        response["token"] = session["credentials"]["token"]
+    return jsonify(response)
 
 
 @app.route('/create_classroom', methods=['POST'])
@@ -61,7 +73,6 @@ def create_classroom():
         return jsonify({"message": "Classroom created successfully!", "course": course})
 
 
-os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 dotenv.load_dotenv()
 CLIENT_ID = os.getenv('CLIENT_ID')
 CLIENT_SECRET = os.getenv('CLIENT_SECRET')
@@ -87,8 +98,11 @@ flow = Flow.from_client_config(
 @app.route('/google_authorize', methods=['GET'])
 def google_authorize():
     if request.method == 'GET':
-        auth_url, _ = flow.authorization_url()
-        return redirect(auth_url)
+        try:
+            auth_url, _ = flow.authorization_url()
+            return jsonify({"status": "success", "auth_url": auth_url})
+        except Exception as e:
+            return jsonify({"status": "error", "message": f"Unable to authorize: {e}"})
 
 
 @app.route('/oauth2callback')
@@ -104,8 +118,9 @@ def oauth2callback():
         "scopes": flow.credentials.scopes
     }
     print(session["credentials"]["token"])
-    return jsonify({"message": "Authorization successful!", "token": session["credentials"]["token"]})
+    return redirect("http://localhost:3000/message")
 
 
 if __name__ == "__main__":
-    app.run(ssl_context="adhoc", debug=True)
+    context = ('local.crt', 'local.key')
+    app.run(ssl_context=context, debug=True)

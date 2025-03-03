@@ -7,6 +7,7 @@ click==8.1.8
 cryptography==44.0.2
 dotenv==0.9.9
 Flask==3.1.0
+flask-cors==5.0.1
 google-api-core==2.24.1
 google-api-python-client==2.162.0
 google-auth==2.38.0
