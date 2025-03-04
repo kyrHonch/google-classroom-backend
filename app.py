@@ -20,7 +20,9 @@ ASSETS_DIR = os.path.dirname(os.path.abspath(__file__))
 def hello_world():
     response = {"message": "Hello, World!"}
     if session.get("credentials"):
-        response["token"] = session["credentials"]["token"]
+        response["status"] = "authorized"
+    else:
+        response["status"] = "unauthorized"
     return jsonify(response)
 
 
@@ -32,12 +34,14 @@ def create_classroom():
         request_data = request.get_json()
         if not request_data:
             request_data["name"] = "test classroom"
-            request_data["section"] = "test section"
-            request_data["description"] = "test description"
+        # "name": "Python Class Test",
+        # "section": "Section",
+        # "description": "Test Classroom",
+        # "ownerId": "me",
         course = {
             "name": request_data["name"],
-            "section": request_data["section"],
-            "description": request_data["description"],
+            "section": "Section",
+            "description": "Test Classroom",
             "ownerId": "me"
         }
         try:
@@ -46,11 +50,12 @@ def create_classroom():
             return jsonify({"message": f"Unable to list classrooms: {e}"})
         exists = False
         course_id = None
-        for course in course_list["courses"]:
-            if course["name"] == request_data["name"]:
+        for course_ in course_list["courses"]:
+            if course_["name"] == request_data["name"] and course_["state"] == "ACTIVE":
                 course_id = course["id"]
                 exists = True
                 break
+
 
         if not exists:
             try:
@@ -99,7 +104,7 @@ flow = Flow.from_client_config(
 def google_authorize():
     if request.method == 'GET':
         try:
-            auth_url, _ = flow.authorization_url()
+            auth_url, _ = flow.authorization_url(access_type="offline", prompt="consent")
             return jsonify({"status": "success", "auth_url": auth_url})
         except Exception as e:
             return jsonify({"status": "error", "message": f"Unable to authorize: {e}"})
@@ -118,7 +123,7 @@ def oauth2callback():
         "scopes": flow.credentials.scopes
     }
     print(session["credentials"]["token"])
-    return redirect("http://localhost:3000/message")
+    return redirect("http://localhost:3000/create-classroom")
 
 
 if __name__ == "__main__":
